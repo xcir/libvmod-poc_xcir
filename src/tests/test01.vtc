@@ -1,0 +1,22 @@
+varnishtest "Test poc_xcir vmod"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import poc_xcir from "${vmod_topbuild}/src/.libs/libvmod_poc_xcir.so";
+
+	sub vcl_deliver {
+		set resp.http.hello = poc_xcir.hello("World");
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.hello == "Hello, World"
+}
+
+client c1 -run
