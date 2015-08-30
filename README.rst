@@ -2,18 +2,26 @@
 vmod_poc_xcir
 ============
 
-----------------------
-Varnish Example Module
-----------------------
+-------------------------------
+On-the-fly thumbnail generator
+-------------------------------
 
-:Date: 2015-03-03
-:Version: 1.0
+:Date: 2015-08-31
+:Version: 0.0-poc-varnish41
+:Support Varnish Version: 4.1.x
 :Manual section: 3
 
 SYNOPSIS
 ========
 
 import poc_xcir;
+
+ATTENTION
+===========
+
+This vmod is proof of concept.
+In development.
+Less than alpha version.
 
 DESCRIPTION
 ===========
