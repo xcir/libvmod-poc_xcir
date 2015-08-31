@@ -2,6 +2,15 @@
 #include "vmod_poc_vfp.h"
 #include <wand/MagickWand.h>
 
+/*
+Known problem
+	- Should unset beresp.http.content-length
+	- Should set the thread_pool_stack=512k in runtime-param
+
+
+
+
+*/
 struct vmod_smalllight_buffer {
 	unsigned				magic;
 #define VMOD_SMALLLIGHT_BUFFER_MAGIC		0x8d4cef02
@@ -105,6 +114,8 @@ static void __match_proto__(vfp_fini_f)
 vfp_pull_fini(struct vfp_ctx *vc, struct vfp_entry *vfe)
 {
 	struct vfp_hk *vh = vfe->priv1;
+	struct vmod_smalllight_buffer *sb = (struct vmod_smalllight_buffer *)vh->priv;
+	FREE_OBJ(sb);
 	FREE_OBJ(vh);
 	//if(vfe->priv1) vmod_smalllight_buffer_free(vfe->priv1);
 	syslog(6,"fini");
