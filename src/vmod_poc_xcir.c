@@ -21,7 +21,7 @@ struct vmod_smalllight_buffer {
 
 
 
-void test(void** imgbuf,ssize_t *sz){
+void test(void** body,ssize_t *sz){
 	//これ増やさないと落ちる・・・
 	// thread_pool_stack=512k
 
@@ -35,12 +35,12 @@ void test(void** imgbuf,ssize_t *sz){
 	wand = NewMagickWand();
 	
 	
-	MagickReadImageBlob(wand, *imgbuf, *sz);
+	MagickReadImageBlob(wand, *body, *sz);
 	MagickResetIterator(wand);
 	while (MagickNextImage(wand) != MagickFalse){
 		MagickResizeImage(wand,50,50,LanczosFilter,1.0);
 	}
-	free(*imgbuf);
+	free(*body);
 	
 	//struct vmod_smalllight_buffer *buf;
 	//buf = (struct vmod_smalllight_buffer *)vfe->priv1;
@@ -52,7 +52,7 @@ void test(void** imgbuf,ssize_t *sz){
 	void *tmp2=calloc(*sz,1);
 	memcpy(tmp2,tmp,*sz);
 	AN(tmp2);
-	*imgbuf = tmp2;
+	*body = tmp2;
 	DestroyMagickWand(wand);
 	
 	
