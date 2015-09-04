@@ -95,18 +95,23 @@ struct vmod_poc_xcir_poc_xcir {
 	
 */
 
-	
-double parse_double(struct busyobj *bo,const char* key){
+const char *readParamRaw(struct busyobj *bo,const char* key){
 	const char *p;
 	http_GetHdrField(bo->bereq0, VMOD_PARAM_HEADER, key, &p);
+	return p;
+}
+double parse_double(struct busyobj *bo,const char* key){
+	const char *p;
+	p = readParamRaw(bo, key);
+	if(p==NULL) return 0;
 	return atof(p);
 }
 int parse_coord(struct busyobj *bo,const char* key, struct vmod_http_small_light_coord_t *d){
-	const char *p;
 	char *er;
-	http_GetHdrField(bo->bereq0, VMOD_PARAM_HEADER, key, &p);
+	const char *p;
+	p = readParamRaw(bo, key);
 	syslog(6,"parse:%s %s",key,p);
-	if(p[0]=='\0'){
+	if(p==NULL || p[0]=='\0'){
 		d->v = 0;
 		d->u = VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE;
 		return 0;
@@ -187,6 +192,42 @@ VCL_VOID vmod_poc_xcir__fini(struct vmod_poc_xcir_poc_xcir **smlp)
 
 }
 
+void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
+	const char *p;
+	parse_coord(bo,"sx",pr->sx);
+	parse_coord(bo,"sy",pr->sy);
+	parse_coord(bo,"sw",pr->sw);
+	parse_coord(bo,"sh",pr->sh);
+
+	parse_coord(bo,"dx",pr->dx);
+	parse_coord(bo,"dy",pr->dy);
+	parse_coord(bo,"dw",pr->dw);
+	parse_coord(bo,"dh",pr->dh);
+
+	p = readParamRaw(bo, "da");
+	if(p==NULL || p[0]=='l'){
+		pr->da = VMOD_HTTP_SMALL_LIGHT_LONG_EDGE;
+	}else if(p[0]=='s'){
+		pr->da = VMOD_HTTP_SMALL_LIGHT_SHORT_EDGE;
+	}else if(p[0]=='n'){
+		pr->da = VMOD_HTTP_SMALL_LIGHT_NOPE;
+	}else{
+		pr->da = VMOD_HTTP_SMALL_LIGHT_LONG_EDGE;
+	}
+
+	p = readParamRaw(bo, "ds");
+	if(p==NULL || p[0]=='n'){
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_NO_SCALE_SMALL_IMAGE;
+	}else if(p[0]=='f'){
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_FORCE_SCALE;
+	}else{
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_NO_SCALE_SMALL_IMAGE;
+	}
+	
+	pr->cw = parse_double(bo,"cw");
+	pr->ch = parse_double(bo,"ch");
+
+}
 
 void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	
@@ -211,9 +252,9 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_
 	//prcalc(pr);
 	
 	//if(pr->sx < iw)
-	
-	parse_coord(bo,"dw",pr->dw);
-	parse_coord(bo,"dh",pr->dh);
+	readParam(bo,pr);
+//	parse_coord(bo,"dw",pr->dw);
+//	parse_coord(bo,"dh",pr->dh);
 
 	syslog(6,"size:'%f' '%f'",pr->dw->v, pr->dh->v);
 	while (MagickNextImage(wand) != MagickFalse){
