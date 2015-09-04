@@ -61,7 +61,7 @@ struct vmod_smalllight_param {
 	
 */
 
-const char *readParamRaw(struct busyobj *bo,const char* key){
+const char *vmod_smalllight_param_readParamRaw(struct busyobj *bo,const char* key){
 	const char *p;
 	http_GetHdrField(bo->bereq0, VMOD_PARAM_HEADER, key, &p);
 	return p;
@@ -69,12 +69,12 @@ const char *readParamRaw(struct busyobj *bo,const char* key){
 	
 	
 	
-int parse_color(struct busyobj *bo,const char* key, struct vmod_http_small_light_color_t *color)
+int vmod_smalllight_param_parse_color(struct busyobj *bo,const char* key, struct vmod_http_small_light_color_t *color)
 {
 	const char *p;
 	char *sp;
 	int len;
-	p = readParamRaw(bo, key);
+	p = vmod_smalllight_param_readParamRaw(bo, key);
 	if(p==NULL) return 0;
 	
 	sp = strstr(p, ",");
@@ -110,9 +110,9 @@ int parse_color(struct busyobj *bo,const char* key, struct vmod_http_small_light
     }
     return 0;
 }
-unsigned parse_bool(struct busyobj *bo,const char* key, char yes, unsigned def){
+unsigned vmod_smalllight_param_parse_bool(struct busyobj *bo,const char* key, char yes, unsigned def){
 	const char *p;
-	p = readParamRaw(bo, key);
+	p = vmod_smalllight_param_readParamRaw(bo, key);
 	if(p==NULL || p[0]=='\0'){
 		return def;
 	}
@@ -122,16 +122,16 @@ unsigned parse_bool(struct busyobj *bo,const char* key, char yes, unsigned def){
 	return def;
 	
 }
-double parse_double(struct busyobj *bo,const char* key){
+double vmod_smalllight_param_parse_double(struct busyobj *bo,const char* key){
 	const char *p;
-	p = readParamRaw(bo, key);
+	p = vmod_smalllight_param_readParamRaw(bo, key);
 	if(p==NULL) return 0;
 	return atof(p);
 }
-int parse_coord(struct busyobj *bo,const char* key, struct vmod_http_small_light_coord_t *d){
+int vmod_smalllight_param_parse_coord(struct busyobj *bo,const char* key, struct vmod_http_small_light_coord_t *d){
 	char *er;
 	const char *p;
-	p = readParamRaw(bo, key);
+	p = vmod_smalllight_param_readParamRaw(bo, key);
 	syslog(6,"parse:%s %s",key,p);
 	if(p==NULL || p[0]=='\0'){
 		d->v = 0;
@@ -222,7 +222,7 @@ void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
 	const char *p;
 	char *sp=NULL;
 	int i,len;
-	p = readParamRaw(bo, key);
+	p = vmod_smalllight_param_readParamRaw(bo, key);
 	if(p == NULL){
 		buffer[0]='\0';
 		return;
@@ -250,17 +250,17 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	const char *p;
 	char bf[32];
 	
-	parse_coord(bo,"sx",pr->sx);
-	parse_coord(bo,"sy",pr->sy);
-	parse_coord(bo,"sw",pr->sw);
-	parse_coord(bo,"sh",pr->sh);
+	vmod_smalllight_param_parse_coord(bo,"sx",pr->sx);
+	vmod_smalllight_param_parse_coord(bo,"sy",pr->sy);
+	vmod_smalllight_param_parse_coord(bo,"sw",pr->sw);
+	vmod_smalllight_param_parse_coord(bo,"sh",pr->sh);
 
-	parse_coord(bo,"dx",pr->dx);
-	parse_coord(bo,"dy",pr->dy);
-	parse_coord(bo,"dw",pr->dw);
-	parse_coord(bo,"dh",pr->dh);
+	vmod_smalllight_param_parse_coord(bo,"dx",pr->dx);
+	vmod_smalllight_param_parse_coord(bo,"dy",pr->dy);
+	vmod_smalllight_param_parse_coord(bo,"dw",pr->dw);
+	vmod_smalllight_param_parse_coord(bo,"dh",pr->dh);
 
-	p = readParamRaw(bo, "da");
+	p = vmod_smalllight_param_readParamRaw(bo, "da");
 	if(p==NULL || p[0]=='l'){
 		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE;
 	}else if(p[0]=='s'){
@@ -271,7 +271,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE;
 	}
 
-	p = readParamRaw(bo, "ds");
+	p = vmod_smalllight_param_readParamRaw(bo, "ds");
 	if(p==NULL || p[0]=='n'){
 		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_NO_SCALE_SMALL_IMAGE;
 	}else if(p[0]=='f'){
@@ -280,13 +280,13 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_NO_SCALE_SMALL_IMAGE;
 	}
 	
-	pr->cw = parse_double(bo,"cw");
-	pr->ch = parse_double(bo,"ch");
-	parse_color(bo,"cc",pr->cc);
+	pr->cw = vmod_smalllight_param_parse_double(bo,"cw");
+	pr->ch = vmod_smalllight_param_parse_double(bo,"ch");
+	vmod_smalllight_param_parse_color(bo,"cc",pr->cc);
 
-	pr->bw = parse_double(bo,"bw");
-	pr->bh = parse_double(bo,"bh");
-	parse_color(bo,"bc",pr->bc);
+	pr->bw = vmod_smalllight_param_parse_double(bo,"bw");
+	pr->bh = vmod_smalllight_param_parse_double(bo,"bh");
+	vmod_smalllight_param_parse_color(bo,"bc",pr->bc);
 	
 
 	getVal(bo,"pt",bf,1,sizeof(bf));
@@ -301,7 +301,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	}
 
 	//未指定の時の動きを作る（q維持）
-	pr->q = parse_double(bo,"q");
+	pr->q = vmod_smalllight_param_parse_double(bo,"q");
 	if(pr->q < 0){
 		pr->q=0;
 	}else if(pr->q > 100){
@@ -323,9 +323,9 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_AUTO;
 	}
 
-	pr->inhexif  = parse_bool(bo,"inhexif"  ,'y',0);
-	pr->jpeghint = parse_bool(bo,"jpeghint" ,'y',0);
-	pr->info     = parse_bool(bo,"info"     ,'1',0);
+	pr->inhexif  = vmod_smalllight_param_parse_bool(bo,"inhexif"  ,'y',0);
+	pr->jpeghint = vmod_smalllight_param_parse_bool(bo,"jpeghint" ,'y',0);
+	pr->info     = vmod_smalllight_param_parse_bool(bo,"info"     ,'1',0);
 	//void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
 	getVal(bo,"e",bf,1,sizeof(bf));
 	if(bf==NULL){
@@ -340,7 +340,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 
 	/*
 	char[10]ぐらいの定義してそこにコピーして評価したほうがいいね
-	p = readParamRaw(bo, "e");
+	p = vmod_smalllight_param_readParamRaw(bo, "e");
 	*/
 
 }
