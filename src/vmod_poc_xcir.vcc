@@ -20,10 +20,67 @@ You can even have links and lists in here:
 
 The init-function declared next does not have documentation.
 
+#$Function VOID addPattern(STRING p, STRING sx="n", STRING sy="n", STRING sw="n", STRING sh="n", STRING dx="n", STRING dy="n", STRING dw="n", STRING dh="n", ENUM { s, l, n } da="l", ENUM { s, n } ds="n",STRING cw="n", STRING ch="n", STRING cc="000000", STRING bw="n", STRING bh="n", STRING bc="000000", ENUM {ptss, ptls, n} pt="n", INT q="-1", ENUM {jpeg, png, tiff, gif, agif, auto} of="auto", ENUM {n, y} inhexif="n", ENUM {y, n} jpeghint="n", ENUM {0, 1} info="0", ENUM {imlib2,imagemagick,dummy} e="dummy", STRING sharpen="", STRING unsharp="", blur="")
+#$Object poc_xcir()
+#$Method VOID .HookFetch()
+
 $Init init_function
 $Function VOID HookFetch()
 $Function VOID imagickini()
 $Function VOID imagickfini()
+
+#    KEY       VALUE [TYPE OF VALUE]
+#-------------------------------------------------------------------
+#    sx        source x [coord]
+#    sy        source y [coord]
+#    sw        source width [coord]
+#    sh        source height [coord]
+#    dx        destination x [coord]
+#    dy        destination y [coord]
+#    dw        destination width [coord]
+#    dh        destination height [coord]
+#    da        destination aspect ratio control [char]
+#              (s=short-edge l=long-edge n=nope default:l)
+#    ds        destination scaling control [char]
+#              (s=force scale n=no scale small image default:n)
+#    cw        canvas width [number]
+#    ch        canvas height [number]
+#    cc        canvas color(default:000000) [color]
+#    bw        border width [number]
+#    bh        border height [number]
+#    bc        border color(default:000000) [color]
+#    pt        pass through control [char]
+#              (ptss:pass through when size of src-image < dest
+#               ptls:pass through when size of src-image > dest
+#               n:none default:n)
+#    q         quality(affects only jpeg or png, 0-100) [number]
+#    of        output format(jpeg,png,tiff,gif) [char] *1
+#    inhexif   inherit EXIF [char] *2
+#              (n:none y:inherit default:n)
+#    jpeghint  enable jpeg loading optimization [char]
+#              (n:none y:enable default:n)
+#    info      add transformation description to HTTP Header [number]
+#              (0:none 1:add default:0)
+#    p         pattern name(see below)
+#    e         engine name(imlib2,imagemagick,dummy) [char]
+#    sharpen   e=imlib2,sharpen=radius
+#              e=imagemagick,sharpen=radius,sigma
+#    unsharp   e=imagemagick,unsharp=radius,sigma,amount,threshold
+#    blur      e=imlib2,blur=radius
+#              e=imagemagick,blur=radius,sigma
+#    -------------------------------------------------------------------
+#    *1 of=gif is supported only when e=imagemagick
+#    *2 inhexif is supported only when e=imlib2
+#
+#    TYPE OF VALUE
+#    -------------------------------------------------------------------
+#    coord   corrdinate. pixel, or percent by appending 'p'.
+#    char    character
+#    number  number
+#    color   rrggbb or rrggbbaa. ffffff as white, 000000 as black.
+#    -------------------------------------------------------------------
+# $Function VOID doThumbs(STRING p="", STRING sx="n", STRING sy="n", STRING sw="n", STRING sh="n", STRING dx="n", STRING dy="n", STRING dw="n", STRING dh="n", ENUM { s, l, n } da="l", ENUM { s, n } ds="n",STRING cw="n", STRING ch="n", STRING cc="000000", STRING bw="n", STRING bh="n", STRING bc="000000", ENUM {ptss, ptls, n} pt="n", INT q="-1", ENUM {jpeg, png, tiff, gif, agif, auto} of="auto", ENUM {n, y} inhexif="n", ENUM {y, n} jpeghint="n", ENUM {0, 1} info="0", ENUM {imlib2,imagemagick,dummy} e="dummy", STRING sharpen="", STRING unsharp="", blur="")
+#$Function VOID addPattern(STRING p, STRING sx="n", STRING sy="n", STRING sw="n", STRING sh="n", STRING dx="n", STRING dy="n", STRING dw="n", STRING dh="n", ENUM { s, l, n } da="l", ENUM { s, n } ds="n",STRING cw="n", STRING ch="n", STRING cc="000000", STRING bw="n", STRING bh="n", STRING bc="000000", ENUM {ptss, ptls, n} pt="n", INT q="-1", ENUM {jpeg, png, tiff, gif, agif, auto} of="auto", ENUM {n, y} inhexif="n", ENUM {y, n} jpeghint="n", ENUM {0, 1} info="0", ENUM {imlib2,imagemagick,dummy} e="dummy", STRING sharpen="", STRING unsharp="", blur="")
 
 
 The different functions provided by the VMOD should also have their own
