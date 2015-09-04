@@ -88,6 +88,7 @@ struct vmod_smalllight_param {
 	unsigned                                 jpeghint;
 	unsigned                                 info;
 	enum vmod_http_small_light_engine        e;
+	//sharpen / unsharp / blurはそれぞれのエンジン内でパースする
 };
 
 #define VMOD_SMALLLIGHT_PARAM_IGNORE_Q  -1;

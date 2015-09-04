@@ -309,7 +309,7 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_NOPE;
 	}
 
-	//未指定の時の動きを作る（q維持）
+	//未指定の時はVMOD_SMALLLIGHT_PARAM_IGNORE_Q
 	if(!vmod_smalllight_param_parse_double(bo,"q",&pr->q)){
 		pr->q = VMOD_SMALLLIGHT_PARAM_IGNORE_Q;
 	}else if(pr->q < 0){
@@ -336,7 +336,7 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 	pr->inhexif  = vmod_smalllight_param_parse_bool(bo,"inhexif"  ,'y',0);
 	pr->jpeghint = vmod_smalllight_param_parse_bool(bo,"jpeghint" ,'y',0);
 	pr->info     = vmod_smalllight_param_parse_bool(bo,"info"     ,'1',0);
-	//void vmod_smalllight_param_get_val_txt(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
+	
 	vmod_smalllight_param_get_val_txt(bo,"e",bf,1,sizeof(bf));
 	if(bf==NULL){
 		pr->e = VMOD_HTTP_SMALL_LIGHT_E_DUMMY;
