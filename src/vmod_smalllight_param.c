@@ -149,6 +149,40 @@ int vmod_smalllight_param_parse_coord(struct busyobj *bo,const char* key, struct
 	}
 	return 1;
 }
+
+
+
+
+
+
+void vmod_smalllight_param_get_val_txt(struct busyobj *bo, const char* key, char *buffer, int conma, int sz){
+	//カンマ分スキップする（blur=radius,sigma用）
+	const char *p;
+	char *sp=NULL;
+	int i,len;
+	p = vmod_smalllight_param_readParamRaw(bo, key);
+	if(p == NULL){
+		buffer[0]='\0';
+		return;
+	}
+	sp = (char*)p;
+	for(i=0;i < conma;i++){
+		sp = strstr(sp + i,",");
+		if(sp == NULL){
+			sp = (char*)p + strlen(p);
+			break;
+		}
+	}
+	len = sp - (char*)p;
+	if(i < conma -1 || sz < len){
+		buffer[0]='\0';
+		return;
+	}
+	strncpy(buffer,p,len);
+	buffer[len] = '\0';
+}
+
+	
 struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir(){
 	struct vmod_poc_xcir_poc_xcir *sml;
 	ALLOC_OBJ(sml, VMOD_POC_XCIR_POC_XCIR_MAGIC);
@@ -217,35 +251,6 @@ void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml){
 
 }
 
-void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
-	//カンマ分スキップする（blur=radius,sigma用）
-	const char *p;
-	char *sp=NULL;
-	int i,len;
-	p = vmod_smalllight_param_readParamRaw(bo, key);
-	if(p == NULL){
-		buffer[0]='\0';
-		return;
-	}
-	syslog(6,"aa:%s",p);
-	sp = (char*)p;
-	//int len = strlen(p);
-	for(i=0;i < conma;i++){
-		sp = strstr(sp + i,",");
-		if(sp == NULL){
-			sp = (char*)p + strlen(p);
-			break;
-		}
-	}
-	len = sp - (char*)p;
-	syslog(6,"aab:%d %d %d",len,i,sz);
-	if(i < conma -1 || sz < len){
-		buffer[0]='\0';
-		return;
-	}
-	strncpy(buffer,p,len);
-	buffer[len] = '\0';
-}
 void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	const char *p;
 	char bf[32];
@@ -289,7 +294,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	vmod_smalllight_param_parse_color(bo,"bc",pr->bc);
 	
 
-	getVal(bo,"pt",bf,1,sizeof(bf));
+	vmod_smalllight_param_get_val_txt(bo,"pt",bf,1,sizeof(bf));
 	if(bf==NULL || bf[0]=='n'){
 		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_NOPE;
 	}else if(0==strcmp(bf,"ptss")){
@@ -308,7 +313,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 		pr->q=100;
 	}
 	
-	getVal(bo,"of",bf,1,sizeof(bf));
+	vmod_smalllight_param_get_val_txt(bo,"of",bf,1,sizeof(bf));
 	if(bf==NULL){
 		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_AUTO;
 	}else if(0==strcmp(bf,"png")){
@@ -326,8 +331,8 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	pr->inhexif  = vmod_smalllight_param_parse_bool(bo,"inhexif"  ,'y',0);
 	pr->jpeghint = vmod_smalllight_param_parse_bool(bo,"jpeghint" ,'y',0);
 	pr->info     = vmod_smalllight_param_parse_bool(bo,"info"     ,'1',0);
-	//void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
-	getVal(bo,"e",bf,1,sizeof(bf));
+	//void vmod_smalllight_param_get_val_txt(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
+	vmod_smalllight_param_get_val_txt(bo,"e",bf,1,sizeof(bf));
 	if(bf==NULL){
 		pr->e = VMOD_HTTP_SMALL_LIGHT_E_DUMMY;
 //	}else if(0==strcmp(bf,"imlib2")){
