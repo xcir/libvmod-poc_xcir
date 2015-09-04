@@ -122,11 +122,15 @@ unsigned vmod_smalllight_param_parse_bool(struct busyobj *bo,const char* key, ch
 	return def;
 	
 }
-double vmod_smalllight_param_parse_double(struct busyobj *bo,const char* key){
+int vmod_smalllight_param_parse_double(struct busyobj *bo,const char* key, double *d){
 	const char *p;
 	p = vmod_smalllight_param_readParamRaw(bo, key);
-	if(p==NULL) return 0;
-	return atof(p);
+	if(p == NULL){
+		*d = 0;
+		return 0;
+	}
+	*d = atof(p);
+	return 1;
 }
 int vmod_smalllight_param_parse_coord(struct busyobj *bo,const char* key, struct vmod_http_small_light_coord_t *d){
 	char *er;
@@ -285,12 +289,12 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_NO_SCALE_SMALL_IMAGE;
 	}
 	
-	pr->cw = vmod_smalllight_param_parse_double(bo,"cw");
-	pr->ch = vmod_smalllight_param_parse_double(bo,"ch");
+	vmod_smalllight_param_parse_double(bo,"cw",&pr->cw);
+	vmod_smalllight_param_parse_double(bo,"ch",&pr->ch);
 	vmod_smalllight_param_parse_color(bo,"cc",pr->cc);
 
-	pr->bw = vmod_smalllight_param_parse_double(bo,"bw");
-	pr->bh = vmod_smalllight_param_parse_double(bo,"bh");
+	vmod_smalllight_param_parse_double(bo,"bw",&pr->bw);
+	vmod_smalllight_param_parse_double(bo,"bh",&pr->bh);
 	vmod_smalllight_param_parse_color(bo,"bc",pr->bc);
 	
 
@@ -306,11 +310,12 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 	}
 
 	//未指定の時の動きを作る（q維持）
-	pr->q = vmod_smalllight_param_parse_double(bo,"q");
-	if(pr->q < 0){
-		pr->q=0;
+	if(!vmod_smalllight_param_parse_double(bo,"q",&pr->q)){
+		pr->q = VMOD_SMALLLIGHT_PARAM_IGNORE_Q;
+	}else if(pr->q < 0){
+		pr->q = 0;
 	}else if(pr->q > 100){
-		pr->q=100;
+		pr->q = 100;
 	}
 	
 	vmod_smalllight_param_get_val_txt(bo,"of",bf,1,sizeof(bf));
