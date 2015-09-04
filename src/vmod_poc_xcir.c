@@ -1,15 +1,16 @@
 #include <syslog.h>
 #include "vmod_poc_vfp.h"
 #include <wand/MagickWand.h>
+#include "vmod_poc_param.h"
 
-
-static const char VMOD_PARAM_HEADER[] = "\030x-vmod-smalllight-param:";
 
 /*
 Known problem
 	- Should unset beresp.http.content-length
 	- Should set the thread_pool_stack=512k in runtime-param
 
+todo:
+	- x-vmod-smalllight-paramで固定のしか割り当てられないので-p相当の機能を実施するために-before-paramを作成してそっちを先にパースして上書きする仕組みを作る
 
 
 
@@ -39,50 +40,6 @@ struct vmod_smalllight_param {
 
 };
 */
-enum vmod_http_small_light_aspect_ratio{
-	VMOD_HTTP_SMALL_LIGHT_SHORT_EDGE,
-	VMOD_HTTP_SMALL_LIGHT_LONG_EDGE,
-	VMOD_HTTP_SMALL_LIGHT_NOPE
-};
-enum vmod_http_small_light_scale{
-	VMOD_HTTP_SMALL_LIGHT_FORCE_SCALE,
-	VMOD_HTTP_SMALL_LIGHT_NO_SCALE_SMALL_IMAGE,
-};
-
-enum vmod_http_small_light_coord_unit_t{
-	VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE,
-	VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_PIXEL,
-	VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_PERCENT
-};
-
-struct vmod_http_small_light_coord_t{
-	unsigned		magic;
-	#define VMOD_HTTP_SMALL_LIGHT_COORD_T_MAGIC	0x2aadace3
-    double v;
-    enum vmod_http_small_light_coord_unit_t u;
-};
-
-struct vmod_poc_xcir_poc_xcir {
-	unsigned		magic;
-#define VMOD_POC_XCIR_POC_XCIR_MAGIC	0x2a9daed2
-	double    iw;
-	double    ih;
-
-	struct vmod_http_small_light_coord_t    *sx;
-	struct vmod_http_small_light_coord_t    *sy;
-	struct vmod_http_small_light_coord_t    *sw;
-	struct vmod_http_small_light_coord_t    *sh;
-	
-	struct vmod_http_small_light_coord_t    *dx;
-	struct vmod_http_small_light_coord_t    *dy;
-	struct vmod_http_small_light_coord_t    *dw;
-	struct vmod_http_small_light_coord_t    *dh;
-	
-	enum vmod_http_small_light_aspect_ratio  da;
-	enum vmod_http_small_light_scale         ds;
-	double                                   cw;
-	double                                   ch;
-};
 
 
 /*
@@ -99,6 +56,62 @@ const char *readParamRaw(struct busyobj *bo,const char* key){
 	const char *p;
 	http_GetHdrField(bo->bereq0, VMOD_PARAM_HEADER, key, &p);
 	return p;
+}
+	
+	
+	
+int parse_color(struct busyobj *bo,const char* key, struct vmod_http_small_light_color_t *color)
+{
+	const char *p;
+	char *sp;
+	int len;
+	p = readParamRaw(bo, key);
+	if(p==NULL) return 0;
+	
+	sp = strstr(p, ",");
+	if(sp == NULL){
+		len = strlen(p);
+	}else{
+		len = sp - p;
+	}
+
+	int res;
+    if (len == 3) {
+        res = sscanf(p, "%1hx%1hx%1hx", &color->r, &color->g, &color->b);
+        if (res != EOF) {
+            color->a = 255;
+            return 1;
+        }
+    } else if (len == 4) {
+        res = sscanf(p, "%1hx%1hx%1hx%1hx", &color->r, &color->g, &color->b, &color->a);
+        if (res != EOF) {
+            return 1;
+        }
+    } else if (len == 6) {
+        res = sscanf(p, "%02hx%02hx%02hx", &color->r, &color->g, &color->b);
+        if (res != EOF) {
+            color->a = 255;
+            return 1;
+        }
+    } else if (len == 8) {
+        res = sscanf(p, "%02hx%02hx%02hx%02hx", &color->r, &color->g, &color->b, &color->a);
+        if (res != EOF) {
+            return 1;
+        }
+    }
+    return 0;
+}
+unsigned parse_bool(struct busyobj *bo,const char* key, char yes, unsigned def){
+	const char *p;
+	p = readParamRaw(bo, key);
+	if(p==NULL || p[0]=='\0'){
+		return def;
+	}
+	if(p[0]==yes){
+		return 1;
+	}
+	return def;
+	
 }
 double parse_double(struct busyobj *bo,const char* key){
 	const char *p;
@@ -157,6 +170,12 @@ struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir(){
 	AN(sml->dw);
 	ALLOC_OBJ(sml->dh, VMOD_HTTP_SMALL_LIGHT_COORD_T_MAGIC);
 	AN(sml->dh);
+	///////////////////
+	ALLOC_OBJ(sml->cc, VMOD_HTTP_SMALL_LIGHT_COLOR_T_MAGIC);
+	AN(sml->cc);
+	///////////////////
+	ALLOC_OBJ(sml->bc, VMOD_HTTP_SMALL_LIGHT_COLOR_T_MAGIC);
+	AN(sml->bc);
 	return sml;
 }
 void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml){
@@ -178,6 +197,11 @@ void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml){
 	CHECK_OBJ_NOTNULL(sml->dh, VMOD_HTTP_SMALL_LIGHT_COORD_T_MAGIC);
 	FREE_OBJ(sml->dh);
 	////////////////////////
+	CHECK_OBJ_NOTNULL(sml->cc, VMOD_HTTP_SMALL_LIGHT_COLOR_T_MAGIC);
+	FREE_OBJ(sml->cc);
+	////////////////////////
+	CHECK_OBJ_NOTNULL(sml->bc, VMOD_HTTP_SMALL_LIGHT_COLOR_T_MAGIC);
+	FREE_OBJ(sml->bc);
 
 	CHECK_OBJ_NOTNULL(sml, VMOD_POC_XCIR_POC_XCIR_MAGIC);
 	FREE_OBJ(sml);
@@ -192,8 +216,39 @@ VCL_VOID vmod_poc_xcir__fini(struct vmod_poc_xcir_poc_xcir **smlp)
 
 }
 
+void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
+	//カンマ分スキップする（blur=radius,sigma用）
+	const char *p;
+	char *sp=NULL;
+	int i,len;
+	p = readParamRaw(bo, key);
+	if(p == NULL){
+		buffer[0]='\0';
+		return;
+	}
+	syslog(6,"aa:%s",p);
+	sp = (char*)p;
+	//int len = strlen(p);
+	for(i=0;i < conma;i++){
+		sp = strstr(sp + i,",");
+		if(sp == NULL){
+			sp = (char*)p + strlen(p);
+			break;
+		}
+	}
+	len = sp - (char*)p;
+	syslog(6,"aab:%d %d %d",len,i,sz);
+	if(i < conma -1 || sz < len){
+		buffer[0]='\0';
+		return;
+	}
+	strncpy(buffer,p,len);
+	buffer[len] = '\0';
+}
 void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	const char *p;
+	char bf[32];
+	
 	parse_coord(bo,"sx",pr->sx);
 	parse_coord(bo,"sy",pr->sy);
 	parse_coord(bo,"sw",pr->sw);
@@ -206,33 +261,90 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 
 	p = readParamRaw(bo, "da");
 	if(p==NULL || p[0]=='l'){
-		pr->da = VMOD_HTTP_SMALL_LIGHT_LONG_EDGE;
+		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE;
 	}else if(p[0]=='s'){
-		pr->da = VMOD_HTTP_SMALL_LIGHT_SHORT_EDGE;
+		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_SHORT_EDGE;
 	}else if(p[0]=='n'){
-		pr->da = VMOD_HTTP_SMALL_LIGHT_NOPE;
+		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_NOPE;
 	}else{
-		pr->da = VMOD_HTTP_SMALL_LIGHT_LONG_EDGE;
+		pr->da = VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE;
 	}
 
 	p = readParamRaw(bo, "ds");
 	if(p==NULL || p[0]=='n'){
-		pr->ds = VMOD_HTTP_SMALL_LIGHT_NO_SCALE_SMALL_IMAGE;
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_NO_SCALE_SMALL_IMAGE;
 	}else if(p[0]=='f'){
-		pr->ds = VMOD_HTTP_SMALL_LIGHT_FORCE_SCALE;
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_FORCE_SCALE;
 	}else{
-		pr->ds = VMOD_HTTP_SMALL_LIGHT_NO_SCALE_SMALL_IMAGE;
+		pr->ds = VMOD_HTTP_SMALL_LIGHT_DS_NO_SCALE_SMALL_IMAGE;
 	}
 	
 	pr->cw = parse_double(bo,"cw");
 	pr->ch = parse_double(bo,"ch");
+	parse_color(bo,"cc",pr->cc);
+
+	pr->bw = parse_double(bo,"bw");
+	pr->bh = parse_double(bo,"bh");
+	parse_color(bo,"bc",pr->bc);
+	
+
+	getVal(bo,"pt",bf,1,sizeof(bf));
+	if(bf==NULL || bf[0]=='n'){
+		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_NOPE;
+	}else if(0==strcmp(bf,"ptss")){
+		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_PTSS;
+	}else if(0==strcmp(bf,"ptls")){
+		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_PTLS;
+	}else{
+		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_NOPE;
+	}
+
+	pr->q = parse_double(bo,"q");
+	if(pr->q < 0){
+		pr->q=0;
+	}else if(pr->q > 100){
+		pr->q=100;
+	}
+	
+	getVal(bo,"of",bf,1,sizeof(bf));
+	if(bf==NULL){
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_AUTO;
+	}else if(0==strcmp(bf,"png")){
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_PNG;
+	}else if(0==strcmp(bf,"gif")){
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_GIF;
+	}else if(0==strcmp(bf,"jpeg")){
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_JPEG;
+	}else if(0==strcmp(bf,"tiff")){
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_TIFF;
+	}else{
+		pr->of = VMOD_HTTP_SMALL_LIGHT_OF_AUTO;
+	}
+
+	pr->inhexif  = parse_bool(bo,"inhexif"  ,'y',0);
+	pr->jpeghint = parse_bool(bo,"jpeghint" ,'y',0);
+	pr->info     = parse_bool(bo,"info"     ,'1',0);
+	//void getVal(struct busyobj *bo,const char* key,char *buffer,int conma,int sz){
+	getVal(bo,"e",bf,1,sizeof(bf));
+	if(bf==NULL){
+		pr->e = VMOD_HTTP_SMALL_LIGHT_E_DUMMY;
+//	}else if(0==strcmp(bf,"imlib2")){
+//		pr->e = VMOD_HTTP_SMALL_LIGHT_E_IMLIB2;
+	}else if(0==strcmp(bf,"imagemagick")){
+		pr->e = VMOD_HTTP_SMALL_LIGHT_E_IMAGEMAGICK;
+	}else{
+		pr->e = VMOD_HTTP_SMALL_LIGHT_E_DUMMY;
+	}
+
+	/*
+	char[10]ぐらいの定義してそこにコピーして評価したほうがいいね
+	p = readParamRaw(bo, "e");
+	*/
 
 }
 
 void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 	
-	//これ増やさないと落ちる・・・
-	// thread_pool_stack=512k
 
 	
 	
@@ -247,8 +359,8 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_
 	MagickResetIterator(wand);
 	
 	//syslog(6,"%f",smlp->sx->v); 
-	//smlp->iw = (double)MagickGetImageWidth(wand);
-	//smlp->ih = (double)MagickGetImageWidth(wand);
+	pr->iw = (double)MagickGetImageWidth(wand);
+	pr->ih = (double)MagickGetImageWidth(wand);
 	//prcalc(pr);
 	
 	//if(pr->sx < iw)
