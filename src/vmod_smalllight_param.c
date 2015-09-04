@@ -183,9 +183,9 @@ void vmod_smalllight_param_get_val_txt(struct busyobj *bo, const char* key, char
 }
 
 	
-struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir(){
-	struct vmod_poc_xcir_poc_xcir *sml;
-	ALLOC_OBJ(sml, VMOD_POC_XCIR_POC_XCIR_MAGIC);
+struct vmod_smalllight_param * vmod_smalllight_param_alloc(){
+	struct vmod_smalllight_param *sml;
+	ALLOC_OBJ(sml, VMOD_SMALLLIGHT_PARAM_MAGIC);
 	AN(sml);
 
 	
@@ -221,7 +221,7 @@ struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir(){
 	AN(sml->bc);
 	return sml;
 }
-void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml){
+void vmod_smalllight_param_free(struct vmod_smalllight_param *sml){
 	CHECK_OBJ_NOTNULL(sml->sx, VMOD_HTTP_SMALL_LIGHT_COORD_T_MAGIC);
 	FREE_OBJ(sml->sx);
 	CHECK_OBJ_NOTNULL(sml->sy, VMOD_HTTP_SMALL_LIGHT_COORD_T_MAGIC);
@@ -246,12 +246,12 @@ void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml){
 	CHECK_OBJ_NOTNULL(sml->bc, VMOD_HTTP_SMALL_LIGHT_COLOR_T_MAGIC);
 	FREE_OBJ(sml->bc);
 
-	CHECK_OBJ_NOTNULL(sml, VMOD_POC_XCIR_POC_XCIR_MAGIC);
+	CHECK_OBJ_NOTNULL(sml, VMOD_SMALLLIGHT_PARAM_MAGIC);
 	FREE_OBJ(sml);
 
 }
 
-void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
+void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param* pr){
 	const char *p;
 	char bf[32];
 	

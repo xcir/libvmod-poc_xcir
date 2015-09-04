@@ -64,7 +64,7 @@ struct vmod_smalllight_param {
 */
 
 
-void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
+void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_param* pr){
 	
 
 	
@@ -85,7 +85,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_poc_xcir_poc_
 	//prcalc(pr);
 	
 	//if(pr->sx < iw)
-	readParam(bo,pr);
+	vmod_smalllight_param_read(bo,pr);
 //	parse_coord(bo,"dw",pr->dw);
 //	parse_coord(bo,"dh",pr->dh);
 
@@ -127,7 +127,7 @@ static enum vfp_hk_status __match_proto__(vfp_hk_pull_f)
 	VFP_HK_ReadFullBody(struct vfp_ctx *vc, struct vfp_entry *vfe, void *priv,void **body, ssize_t *len){
 	
 	
-	test(body,len,vc->bo,(struct vmod_poc_xcir_poc_xcir *)priv);
+	test(body,len,vc->bo,(struct vmod_smalllight_param *)priv);
 
 	VSLb(vc->bo->vsl, SLT_Debug, "VFP:vmod_vfp_pull_f:hoge");
 	VSL_Flush(vc->bo->vsl,0);
@@ -154,7 +154,7 @@ vfp_pull_init(struct vfp_ctx *vc, struct vfp_entry *vfe)
 	vfp_hk_PREF->extendsz = 100*1024;//100KB
 	vfp_hk_PREF->buffer   = calloc(vfp_hk_PREF->bufsz,1);
 
-	vfp_hk_PREF->priv = alloc_vmod_poc_xcir_poc_xcir();
+	vfp_hk_PREF->priv = vmod_smalllight_param_alloc();
 	
 	vfe->priv1 = vfp_hk_PREF;
 	
@@ -166,7 +166,7 @@ static void __match_proto__(vfp_fini_f)
 vfp_pull_fini(struct vfp_ctx *vc, struct vfp_entry *vfe)
 {
 	struct vfp_hk *vh = vfe->priv1;
-	free_vmod_poc_xcir_poc_xcir(vh->priv);
+	vmod_smalllight_param_free(vh->priv);
 	FREE_OBJ(vh);
 	syslog(6,"fini");
 }

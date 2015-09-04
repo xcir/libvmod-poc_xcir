@@ -53,10 +53,10 @@ struct vmod_http_small_light_color_t{
 	short b;
 	short a;
 };
-	
-struct vmod_poc_xcir_poc_xcir {
+
+struct vmod_smalllight_param {
 	unsigned		magic;
-#define VMOD_POC_XCIR_POC_XCIR_MAGIC	0x2a9daed2
+#define VMOD_SMALLLIGHT_PARAM_MAGIC	0x2a9daed2
 	double    iw;
 	double    ih;
 
@@ -90,6 +90,6 @@ struct vmod_poc_xcir_poc_xcir {
 	enum vmod_http_small_light_engine        e;
 };
 
-struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir();
-void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml);
-void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr);
+struct vmod_smalllight_param * vmod_smalllight_param_alloc();
+void vmod_smalllight_param_free(struct vmod_smalllight_param *sml);
+void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param* pr);
