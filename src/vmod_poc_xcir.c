@@ -12,7 +12,7 @@
 #include <syslog.h>
 #include "vmod_vfp.h"
 #include <wand/MagickWand.h>
-#include "vmod_poc_param.h"
+#include "vmod_smalllight_param.h"
 
 
 /*

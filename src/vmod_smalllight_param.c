@@ -9,7 +9,7 @@
 #include "cache/cache_filter.h"
 #include "cache/cache_director.h"
 
-#include "vmod_poc_param.h"
+#include "vmod_smalllight_param.h"
 #include <syslog.h>
 
 
