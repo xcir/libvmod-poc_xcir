@@ -30,12 +30,13 @@ vmod_vfp_wrap_pull_f(struct vfp_ctx *vc, struct vfp_entry *vfe, void *p, ssize_t
 			ssize_t cps = st_size;
 			//サイズチェック
 			if(vh->bufsz - vh->offset_read < cps){
-				//vh->bufsz += vh->extendsz;
 				void *tmp = realloc(vh->buffer,vh->bufsz + vh->extendsz);
-				//あとでちゃんと開放処理いれる
-				AN(tmp);
+				if(tmp == NULL){
+					free(vh->buffer);
+					AN(tmp);
+				}
 				vh->bufsz += vh->extendsz;
-			VSLb(vc->bo->vsl, SLT_Debug, "VFP:vmod_vfp_pull_f:EXTEND %ld",vh->bufsz);
+				VSLb(vc->bo->vsl, SLT_Debug, "VFP:vmod_vfp_pull_f:EXTEND %ld",vh->bufsz);
 				vh->buffer = tmp;
 			}
 			if(vh->offset_read - vh->offset_write < st_size){
