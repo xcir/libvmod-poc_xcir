@@ -1,5 +1,5 @@
 #include <syslog.h>
-#include "vmod_poc_vfp.h"
+#include "vmod_vfp.h"
 #include <wand/MagickWand.h>
 #include "vmod_poc_param.h"
 
@@ -299,6 +299,7 @@ void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr){
 		pr->pt = VMOD_HTTP_SMALL_LIGHT_PT_NOPE;
 	}
 
+	//未指定の時の動きを作る（q維持）
 	pr->q = parse_double(bo,"q");
 	if(pr->q < 0){
 		pr->q=0;

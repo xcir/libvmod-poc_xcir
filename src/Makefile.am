@@ -8,7 +8,7 @@ vmod_LTLIBRARIES = libvmod_poc_xcir.la
 libvmod_poc_xcir_la_LDFLAGS = -module -export-dynamic -avoid-version -shared -lMagickWand
 
 libvmod_poc_xcir_la_SOURCES = \
-	vmod_poc_vfp.c \
+	vmod_vfp.c \
 	vmod_poc_xcir.c
 
 nodist_libvmod_poc_xcir_la_SOURCES = \
