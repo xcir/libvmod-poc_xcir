@@ -9,6 +9,7 @@ libvmod_poc_xcir_la_LDFLAGS = -module -export-dynamic -avoid-version -shared -lM
 
 libvmod_poc_xcir_la_SOURCES = \
 	vmod_vfp.c \
+	vmod_smalllight_param.c \
 	vmod_poc_xcir.c
 
 nodist_libvmod_poc_xcir_la_SOURCES = \

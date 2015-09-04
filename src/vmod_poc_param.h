@@ -1,5 +1,7 @@
 static const char VMOD_PARAM_HEADER[] = "\030x-vmod-smalllight-param:";
 
+
+
 enum vmod_http_small_light_output_format{
 	VMOD_HTTP_SMALL_LIGHT_OF_JPEG,
 	VMOD_HTTP_SMALL_LIGHT_OF_PNG,
@@ -88,4 +90,6 @@ struct vmod_poc_xcir_poc_xcir {
 	enum vmod_http_small_light_engine        e;
 };
 
-
+struct vmod_poc_xcir_poc_xcir * alloc_vmod_poc_xcir_poc_xcir();
+void free_vmod_poc_xcir_poc_xcir(struct vmod_poc_xcir_poc_xcir *sml);
+void readParam(struct busyobj *bo, struct vmod_poc_xcir_poc_xcir* pr);

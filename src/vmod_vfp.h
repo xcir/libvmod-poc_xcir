@@ -1,13 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "vrt.h"
-#include "cache/cache.h"
-
-#include "vcc_if.h"
-
-#include "cache/cache_filter.h"
-#include "cache/cache_director.h"
 
 
 //////////////////
