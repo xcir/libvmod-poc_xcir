@@ -14,7 +14,20 @@
 #include <wand/MagickWand.h>
 #include "vmod_smalllight_param.h"
 
-
+const char *vmod_smalllight_param_ctypes[] = {
+	"",
+	"Content-Type: image/jpeg",
+	"Content-Type: image/png",
+	"Content-Type: image/tiff",
+	"Content-Type: image/gif"
+};
+const char *vmod_smalllight_param_exts[] = {
+	"",
+	"jpeg",
+	"png",
+	"tiff",
+	"gif"
+};
 /*
 Known problem
 	- Should unset beresp.http.content-length
@@ -102,15 +115,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	if(pr->f_pt){
 		//パスするんだけどvarnishの都合上フォーマット変更だけする
 		if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
-			if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
-				MagickSetFormat(wand, "JPEG");
-			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_TIFF){
-				MagickSetFormat(wand, "TIFF");
-			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_PNG){
-				MagickSetFormat(wand, "PNG");
-			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_GIF){
-				MagickSetFormat(wand, "GIF");
-			}
+			MagickSetFormat(wand, vmod_smalllight_param_exts[pr->of]);
 			void *tmp = (void*)MagickGetImageBlob(wand, &isize);
 			*sz=isize;
 			void *tmp2=calloc(*sz,1);
@@ -278,15 +283,7 @@ vfp_pull_init(struct vfp_ctx *vc, struct vfp_entry *vfe)
 	
 	if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
 		http_Unset(vc->http, "\015Content-Type:");
-		if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
-			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_JPEG);
-		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_TIFF){
-			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_TIFF);
-		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_PNG){
-			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_PNG);
-		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_GIF){
-			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_GIF);
-		}
+		http_SetHeader(vc->http, vmod_smalllight_param_ctypes[pr->of]);
 	}	
 	
 	
@@ -307,7 +304,7 @@ vfp_pull_fini(struct vfp_ctx *vc, struct vfp_entry *vfe)
 
 
 struct vfp vfp_PREF = {
-	.name = "TEST",
+	.name = "Smalllight",
 	.init = vfp_pull_init,
 	.pull = vmod_vfp_pull_f,
 	.fini = vfp_pull_fini,

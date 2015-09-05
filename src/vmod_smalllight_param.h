@@ -1,18 +1,13 @@
 #define VMOD_PARAM_HEADER   "\030x-vmod-smalllight-param:"
 
-//content-type
-#define VMOD_PARAM_OF_CTYPE_TIFF  "Content-Type: image/tiff"
-#define VMOD_PARAM_OF_CTYPE_JPEG  "Content-Type: image/jpeg"
-#define VMOD_PARAM_OF_CTYPE_PNG   "Content-Type: image/png"
-#define VMOD_PARAM_OF_CTYPE_GIF   "Content-Type: image/gif"
 
 
 enum vmod_http_small_light_output_format{
-	VMOD_HTTP_SMALL_LIGHT_OF_JPEG,
-	VMOD_HTTP_SMALL_LIGHT_OF_PNG,
-	VMOD_HTTP_SMALL_LIGHT_OF_TIFF,
-	VMOD_HTTP_SMALL_LIGHT_OF_GIF,
-	VMOD_HTTP_SMALL_LIGHT_OF_AUTO
+	VMOD_HTTP_SMALL_LIGHT_OF_AUTO =0,
+	VMOD_HTTP_SMALL_LIGHT_OF_JPEG =1,
+	VMOD_HTTP_SMALL_LIGHT_OF_PNG  =2,
+	VMOD_HTTP_SMALL_LIGHT_OF_TIFF =3,
+	VMOD_HTTP_SMALL_LIGHT_OF_GIF  =4
 };
 
 enum vmod_http_small_light_pass_through{
