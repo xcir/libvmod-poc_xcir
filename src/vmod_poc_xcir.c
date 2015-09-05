@@ -126,8 +126,6 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	color_space = MagickGetImageColorspace(wand);
 	org_f = MagickGetImageFormat(wand);
-	//free
-	free(*body);
 	vmod_smalllight_param_calc(bo, pr);
 	unsigned long nim =  MagickGetNumberImages(wand);
 	if(nim > 1){
@@ -215,6 +213,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	void *tmp2=calloc(*sz,1);
 	memcpy(tmp2,tmp,*sz);
 	AN(tmp2);
+	free(*body);
 	*body = tmp2;
 	DestroyMagickWand(wand);
 	
