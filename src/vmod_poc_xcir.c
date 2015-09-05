@@ -68,7 +68,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 
 	
-	
+	char bf[32];
 	MagickWand	*wand;
 	//MagickWandGenesis();
 	
@@ -76,7 +76,11 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	vmod_smalllight_param_read(bo,pr);
 	
-	//dw,dhを指定
+	//jpeg hint
+	if(pr->jpeghint){
+		snprintf(bf,32,"%dx%d",(int)pr->dw->v,(int)pr->dh->v);
+		MagickSetOption(wand, "jpeg:size", bf);
+	}
 	
 	MagickReadImageBlob(wand, *body, *sz);
 	MagickResetIterator(wand);

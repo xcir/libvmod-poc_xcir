@@ -403,10 +403,6 @@ void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr){
 	}
 	
 
-	//マイナスを考えるのではずれ値作る（反転画像になるはず
-//	vmod_smalllight_param_calc_coord(pr->cw, pr->iw, pr->dw);
-//	vmod_smalllight_param_calc_coord(pr->ch, pr->ih, pr->dh);
-
 }
 
 
