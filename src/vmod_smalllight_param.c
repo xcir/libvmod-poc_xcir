@@ -368,8 +368,6 @@ void vmod_smalllight_param_calc_coord(struct vmod_http_small_light_coord_t *crd,
 }
 	
 void vmod_smalllight_param_calc(struct busyobj *bo,struct vmod_smalllight_param* pr){
-	if(pr->cw==0) pr->cw = pr->dw->v;
-	if(pr->ch==0) pr->ch = pr->dh->v;
 	
 	vmod_smalllight_param_calc_coord(pr->sx, pr->iw, 0);
 	vmod_smalllight_param_calc_coord(pr->sy, pr->ih, 0);
@@ -387,19 +385,35 @@ void vmod_smalllight_param_calc(struct busyobj *bo,struct vmod_smalllight_param*
 	pr->aspect = pr->sw->v / pr->sh->v;
 	VSLb(bo->vsl, SLT_Debug, "CALC:aspect:%f %f",pr->aspect,pr->iw);
 
-	if       (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE){
-		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
-			pr->dw->v = pr->dh->v * pr->aspect;
-		}else{
-			pr->dh->v = pr->dw->v / pr->aspect;
+	if(pr->dw->u != VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE && pr->dh->u != VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE){
+		if       (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE){
+			if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
+				pr->dw->v = pr->dh->v * pr->aspect;
+			}else{
+				pr->dh->v = pr->dw->v / pr->aspect;
+			}
+		}else if (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_SHORT_EDGE){
+			if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
+				pr->dh->v = pr->dw->v / pr->aspect;
+			}else{
+				pr->dw->v = pr->dh->v * pr->aspect;
+			}
 		}
-	}else if (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_SHORT_EDGE){
-		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
-			pr->dh->v = pr->dw->v / pr->aspect;
-		}else{
+		
+	}else{
+		VSLb(bo->vsl, SLT_Debug, "CALC:FIFI %f %f",pr->iw,pr->ih);
+		if(pr->dw->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE && pr->dh->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE){
+			pr->dw->v = pr->sw->v;
+			pr->dh->v = pr->sh->v;
+		}else if(pr->dw->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE){
 			pr->dw->v = pr->dh->v * pr->aspect;
+		}else{
+			pr->dh->v = pr->dw->v / pr->aspect;
 		}
 	}
+	if(pr->cw==0) pr->cw = pr->dw->v;
+	if(pr->ch==0) pr->ch = pr->dh->v;
+
 	//pass through
 	if       (pr->pt == VMOD_HTTP_SMALL_LIGHT_PT_PTSS){
 		if(pr->sw->v < pr->cw && pr->sh->v < pr->ch){

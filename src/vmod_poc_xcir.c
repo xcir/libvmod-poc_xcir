@@ -94,7 +94,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	MagickReadImageBlob(wand, *body, *sz);
 	pr->iw = (double)MagickGetImageWidth(wand);
-	pr->ih = (double)MagickGetImageWidth(wand);
+	pr->ih = (double)MagickGetImageHeight(wand);
 	vmod_smalllight_param_calc(bo, pr);
 	if(pr->f_pt){
 		DestroyMagickWand(wand);
