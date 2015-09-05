@@ -97,7 +97,7 @@ struct vmod_smalllight_param {
 	
 };
 
-#define VMOD_SMALLLIGHT_PARAM_IGNORE_Q  -1;
+#define VMOD_SMALLLIGHT_PARAM_IGNORE_Q  -1
 
 struct vmod_smalllight_param * vmod_smalllight_param_alloc();
 void vmod_smalllight_param_free(struct vmod_smalllight_param *sml);

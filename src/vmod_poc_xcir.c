@@ -194,8 +194,14 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		
 	}
 	
+	
+	if(pr->q != VMOD_SMALLLIGHT_PARAM_IGNORE_Q){
+		VSLb(bo->vsl, SLT_Debug, "MagickSetImageCompressionQuality %f",pr->q);
+		MagickSetImageCompressionQuality(wand, pr->q);
+	}
+	
 	size_t x;
-		
+	
 	void *tmp = (void*)MagickGetImageBlob(wand, &x);
 	*sz=x;
 		syslog(6,"sz=%ld %ld",x,*sz);
