@@ -89,6 +89,10 @@ struct vmod_smalllight_param {
 	unsigned                                 info;
 	enum vmod_http_small_light_engine        e;
 	//sharpen / unsharp / blurはそれぞれのエンジン内でパースする
+	
+	double         aspect;
+	unsigned       f_pt;
+	
 };
 
 #define VMOD_SMALLLIGHT_PARAM_IGNORE_Q  -1;
@@ -96,3 +100,4 @@ struct vmod_smalllight_param {
 struct vmod_smalllight_param * vmod_smalllight_param_alloc();
 void vmod_smalllight_param_free(struct vmod_smalllight_param *sml);
 void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param* pr);
+void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr);

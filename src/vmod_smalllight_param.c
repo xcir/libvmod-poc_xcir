@@ -334,7 +334,10 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 	}
 
 	pr->inhexif  = vmod_smalllight_param_parse_bool(bo,"inhexif"  ,'y',0);
-	pr->jpeghint = vmod_smalllight_param_parse_bool(bo,"jpeghint" ,'y',0);
+	if(pr->dw->v > 0 && pr->dh->v > 0){
+		pr->jpeghint = vmod_smalllight_param_parse_bool(bo,"jpeghint" ,'y',0);
+	}
+	
 	pr->info     = vmod_smalllight_param_parse_bool(bo,"info"     ,'1',0);
 	
 	vmod_smalllight_param_get_val_txt(bo,"e",bf,1,sizeof(bf));
@@ -348,9 +351,64 @@ void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param
 		pr->e = VMOD_HTTP_SMALL_LIGHT_E_DUMMY;
 	}
 
-	/*
-	char[10]ぐらいの定義してそこにコピーして評価したほうがいいね
-	p = vmod_smalllight_param_readParamRaw(bo, "e");
-	*/
 
 }
+
+void vmod_smalllight_param_calc_coord(struct vmod_http_small_light_coord_t *crd, double v,double def){
+    if (crd->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_PIXEL) {
+        return;
+    } else if (crd->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_PERCENT) {
+    	crd->u = VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_PIXEL;
+    	crd->v *= v * 0.01;
+        return;
+    }
+	crd->v = def;
+}
+	
+void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr){
+	vmod_smalllight_param_calc_coord(pr->sx, pr->iw, 0);
+	vmod_smalllight_param_calc_coord(pr->sy, pr->ih, 0);
+	vmod_smalllight_param_calc_coord(pr->sw, pr->iw, pr->iw);
+	vmod_smalllight_param_calc_coord(pr->sh, pr->ih, pr->ih);
+
+	vmod_smalllight_param_calc_coord(pr->dx, pr->iw, 0);
+	vmod_smalllight_param_calc_coord(pr->dy, pr->ih, 0);
+	vmod_smalllight_param_calc_coord(pr->dw, pr->iw, pr->iw);
+	vmod_smalllight_param_calc_coord(pr->dh, pr->ih, pr->ih);
+	
+	//aspect calc
+	pr->aspect = pr->sw->v / pr->sh->v;
+	if       (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE){
+		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
+			pr->dw->v = pr->dh->v * pr->aspect;
+		}else{
+			pr->dh->v = pr->dw->v * pr->aspect;
+		}
+	}else if (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_SHORT_EDGE){
+		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
+			pr->dh->v = pr->dw->v * pr->aspect;
+		}else{
+			pr->dw->v = pr->dh->v * pr->aspect;
+		}
+	}
+	//pass through
+	if       (pr->pt == VMOD_HTTP_SMALL_LIGHT_PT_PTSS){
+		if(pr->sw->v < pr->cw && pr->sh->v < pr->ch){
+			pr->f_pt = 1;
+		}
+	}else if (pr->pt == VMOD_HTTP_SMALL_LIGHT_PT_PTLS){
+		if(pr->sw->v > pr->cw && pr->sh->v > pr->ch){
+			pr->f_pt = 1;
+		}
+	}
+	
+
+	//マイナスを考えるのではずれ値作る（反転画像になるはず
+//	vmod_smalllight_param_calc_coord(pr->cw, pr->iw, pr->dw);
+//	vmod_smalllight_param_calc_coord(pr->ch, pr->ih, pr->dh);
+
+}
+
+
+
+	

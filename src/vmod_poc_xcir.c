@@ -74,6 +74,8 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	wand = NewMagickWand();
 	
+	vmod_smalllight_param_read(bo,pr);
+	
 	//dw,dhを指定
 	
 	MagickReadImageBlob(wand, *body, *sz);
@@ -82,10 +84,10 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	//syslog(6,"%f",smlp->sx->v); 
 	pr->iw = (double)MagickGetImageWidth(wand);
 	pr->ih = (double)MagickGetImageWidth(wand);
+	vmod_smalllight_param_calc(pr);
 	//prcalc(pr);
 	
 	//if(pr->sx < iw)
-	vmod_smalllight_param_read(bo,pr);
 //	parse_coord(bo,"dw",pr->dw);
 //	parse_coord(bo,"dh",pr->dh);
 
