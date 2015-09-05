@@ -362,31 +362,40 @@ void vmod_smalllight_param_calc_coord(struct vmod_http_small_light_coord_t *crd,
     	crd->v *= v * 0.01;
         return;
     }
+	syslog(6, ">>do %f",def);
+	
 	crd->v = def;
 }
 	
-void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr){
+void vmod_smalllight_param_calc(struct busyobj *bo,struct vmod_smalllight_param* pr){
+	if(pr->cw==0) pr->cw = pr->dw->v;
+	if(pr->ch==0) pr->ch = pr->dh->v;
+	
 	vmod_smalllight_param_calc_coord(pr->sx, pr->iw, 0);
 	vmod_smalllight_param_calc_coord(pr->sy, pr->ih, 0);
+	VSLb(bo->vsl, SLT_Debug, "do %d %f",pr->sw->u,pr->iw);
 	vmod_smalllight_param_calc_coord(pr->sw, pr->iw, pr->iw);
 	vmod_smalllight_param_calc_coord(pr->sh, pr->ih, pr->ih);
 
-	vmod_smalllight_param_calc_coord(pr->dx, pr->iw, 0);
-	vmod_smalllight_param_calc_coord(pr->dy, pr->ih, 0);
 	vmod_smalllight_param_calc_coord(pr->dw, pr->iw, pr->iw);
 	vmod_smalllight_param_calc_coord(pr->dh, pr->ih, pr->ih);
-	
+	vmod_smalllight_param_calc_coord(pr->dx, pr->iw, 0);
+	vmod_smalllight_param_calc_coord(pr->dy, pr->ih, 0);
+	VSLb(bo->vsl, SLT_Debug, "CALC:dxy:%f %f",pr->dx->v,pr->dy->v);
+
 	//aspect calc
 	pr->aspect = pr->sw->v / pr->sh->v;
+	VSLb(bo->vsl, SLT_Debug, "CALC:aspect:%f %f",pr->aspect,pr->iw);
+
 	if       (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_LONG_EDGE){
 		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
 			pr->dw->v = pr->dh->v * pr->aspect;
 		}else{
-			pr->dh->v = pr->dw->v * pr->aspect;
+			pr->dh->v = pr->dw->v / pr->aspect;
 		}
 	}else if (pr->da == VMOD_HTTP_SMALL_LIGHT_DA_SHORT_EDGE){
 		if(pr->sw->v / pr->dw->v < pr->sh->v / pr->dh->v){
-			pr->dh->v = pr->dw->v * pr->aspect;
+			pr->dh->v = pr->dw->v / pr->aspect;
 		}else{
 			pr->dw->v = pr->dh->v * pr->aspect;
 		}
@@ -401,6 +410,25 @@ void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr){
 			pr->f_pt = 1;
 		}
 	}
+	//crop
+	if(pr->sx->v != 0 || pr->sy->v != 0 || pr->sw->v != pr->iw || pr->sh->v != pr->ih){
+		pr->f_crop = 1;
+	}
+	//scale
+	if( (pr->dw->v < (pr->sw->v - pr->sx->v)) ||
+		(pr->dh->v < (pr->sh->v - pr->sy->v))
+	){
+		pr->f_scale = 1;
+	}else if(!(
+	         (pr->dw->v == (pr->sw->v - pr->sx->v)) &&
+	         (pr->dh->v == (pr->sh->v - pr->sy->v))
+	          ) && pr->ds == VMOD_HTTP_SMALL_LIGHT_DS_FORCE_SCALE
+	){
+		pr->f_scale = 1;
+	}
+	//set pos
+	if(pr->dx->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE) pr->dx->v = (pr->cw - pr->dw->v)/2;
+	if(pr->dy->u == VMOD_HTTP_SMALL_LIGHT_COORD_UNIT_NONE) pr->dy->v = (pr->ch - pr->dh->v)/2;
 	
 
 }

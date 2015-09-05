@@ -92,6 +92,8 @@ struct vmod_smalllight_param {
 	
 	double         aspect;
 	unsigned       f_pt;
+	unsigned       f_crop;
+	unsigned       f_scale;
 	
 };
 
@@ -100,4 +102,4 @@ struct vmod_smalllight_param {
 struct vmod_smalllight_param * vmod_smalllight_param_alloc();
 void vmod_smalllight_param_free(struct vmod_smalllight_param *sml);
 void vmod_smalllight_param_read(struct busyobj *bo, struct vmod_smalllight_param* pr);
-void vmod_smalllight_param_calc(struct vmod_smalllight_param* pr);
+void vmod_smalllight_param_calc(struct busyobj *bo, struct vmod_smalllight_param* pr);

@@ -63,13 +63,23 @@ struct vmod_smalllight_param {
 	
 */
 
-
+/*
+	リスト向けのメモ(agif)
+	MagickResetIterator(wand);
+	while (MagickNextImage(wand) != MagickFalse){
+		MagickResizeImage(wand, pr->dw->v, pr->dh->v ,LanczosFilter,1.0);
+	}
+*/
+	
+	
 void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_param* pr){
 	
 
 	
 	char bf[32];
+	char *org_f;
 	MagickWand	*wand;
+	ColorspaceType   color_space;
 	//MagickWandGenesis();
 	
 	wand = NewMagickWand();
@@ -83,26 +93,100 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	}
 	
 	MagickReadImageBlob(wand, *body, *sz);
-	MagickResetIterator(wand);
-	
-	//syslog(6,"%f",smlp->sx->v); 
 	pr->iw = (double)MagickGetImageWidth(wand);
 	pr->ih = (double)MagickGetImageWidth(wand);
-	vmod_smalllight_param_calc(pr);
-	//prcalc(pr);
-	
-	//if(pr->sx < iw)
-//	parse_coord(bo,"dw",pr->dw);
-//	parse_coord(bo,"dh",pr->dh);
+	color_space = MagickGetImageColorspace(wand);
+	org_f = MagickGetImageFormat(wand);
+	//free
+	free(*body);
+	vmod_smalllight_param_calc(bo, pr);
 
-	syslog(6,"size:'%f' '%f'",pr->dw->v, pr->dh->v);
-	while (MagickNextImage(wand) != MagickFalse){
+	unsigned long nim =  MagickGetNumberImages(wand);
+	if(nim > 1){
+		//agif
+		//todo
+	}else{
+		//通常画像
+		//todo
+	}
+	
+	
+	
+	//crop
+	if(pr->f_crop){
+		VSLb(bo->vsl, SLT_Debug, "IMAGICK:MagickCropImage:%f,%f,%f,%f",pr->sw->v, pr->sh->v,pr->sx->v, pr->sy->v);
+		MagickCropImage(wand,
+			pr->sw->v, pr->sh->v,
+			pr->sx->v, pr->sy->v
+		);
+	}
+	//scale
+	if(pr->f_scale){
+		VSLb(bo->vsl, SLT_Debug, "IMAGICK:MagickResizeImage:%f,%f",pr->dw->v, pr->dh->v);
 		MagickResizeImage(wand, pr->dw->v, pr->dh->v ,LanczosFilter,1.0);
 	}
-	free(*body);
+	//canvas
+	MagickWand    *canvas_wand;
+	PixelWand     *canvas_color;
+
+	if      (pr->dx->v > 0 || pr->dy->v > 0){
+		//EXTENT
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:A");
+		canvas_wand  = NewMagickWand();
+		//これテンポラリあとでなんとかする
+		MagickSetFormat(canvas_wand, org_f);
+		//
+		canvas_color = NewPixelWand();
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:E");
+		PixelSetRed(canvas_color,   pr->cc->r / 255.0);
+		PixelSetGreen(canvas_color, pr->cc->g / 255.0);
+		PixelSetBlue(canvas_color,  pr->cc->b / 255.0);
+		PixelSetAlpha(canvas_color, pr->cc->a / 255.0);
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:F %f %f %f %f",pr->cw, pr->ch,pr->dx->v, pr->dy->v);
+		VSL_Flush(bo->vsl,0);
+		MagickNewImage(canvas_wand, pr->cw, pr->ch, canvas_color);
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:G");
+		VSL_Flush(bo->vsl,0);
+		DestroyPixelWand(canvas_color);
+		MagickTransformImageColorspace(canvas_wand, color_space);
+		MagickCompositeImage(canvas_wand, wand, AtopCompositeOp, pr->dx->v, pr->dy->v);
+		DestroyMagickWand(wand);
+		wand = canvas_wand;
+	}else if(pr->dw->v == pr->cw && pr->dh->v == pr->ch){
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:B");
+		//nowork
+		
+	}else if(pr->dw->v > pr->cw && pr->dh->v > pr->ch){
+		//crop
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:C");
+		MagickCropImage(wand,
+			pr->cw,pr->ch,
+			0,0
+		);
+	}else{
+		//extent
+		
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:D");
+		canvas_wand  = NewMagickWand();
+		//これテンポラリあとでなんとかする
+		MagickSetFormat(canvas_wand, org_f);
+		//
+		canvas_color = NewPixelWand();
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:E");
+		PixelSetRed(canvas_color,   pr->cc->r / 255.0);
+		PixelSetGreen(canvas_color, pr->cc->g / 255.0);
+		PixelSetBlue(canvas_color,  pr->cc->b / 255.0);
+		PixelSetAlpha(canvas_color, pr->cc->a / 255.0);
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:F %f %f %f %f",pr->cw, pr->ch,pr->dx->v, pr->dy->v);
+		MagickNewImage(canvas_wand, pr->cw, pr->ch, canvas_color);
+		DestroyPixelWand(canvas_color);
+		MagickTransformImageColorspace(canvas_wand, color_space);
+		MagickCompositeImage(canvas_wand, wand, AtopCompositeOp, pr->dx->v, pr->dy->v);
+		DestroyMagickWand(wand);
+		wand = canvas_wand;
+		
+	}
 	
-	//struct vmod_smalllight_buffer *buf;
-	//buf = (struct vmod_smalllight_buffer *)vfe->priv1;
 	size_t x;
 		
 	void *tmp = (void*)MagickGetImageBlob(wand, &x);
