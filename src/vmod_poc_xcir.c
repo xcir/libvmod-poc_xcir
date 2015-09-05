@@ -78,6 +78,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	char bf[32];
 	char *org_f;
+	size_t isize;
 	
 	MagickWand	*wand;
 	ColorspaceType   color_space;
@@ -85,7 +86,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	wand = NewMagickWand();
 	
-	vmod_smalllight_param_read(bo,pr);
+	
 	
 	//jpeg hint
 	if(pr->jpeghint){
@@ -98,6 +99,26 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	pr->ih = (double)MagickGetImageHeight(wand);
 	vmod_smalllight_param_calc(bo, pr);
 	if(pr->f_pt){
+		//パスするんだけどvarnishの都合上フォーマット変更だけする
+		if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
+			if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
+				MagickSetFormat(wand, "JPEG");
+			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_TIFF){
+				MagickSetFormat(wand, "TIFF");
+			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_PNG){
+				MagickSetFormat(wand, "PNG");
+			}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_GIF){
+				MagickSetFormat(wand, "GIF");
+			}
+			void *tmp = (void*)MagickGetImageBlob(wand, &isize);
+			*sz=isize;
+			void *tmp2=calloc(*sz,1);
+			memcpy(tmp2,tmp,*sz);
+			AN(tmp2);
+			free(*body);
+			*body = tmp2;
+			
+		}
 		DestroyMagickWand(wand);
 		return;
 	}
@@ -212,11 +233,9 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		}
 	}
 	
-	size_t x;
 	
-	void *tmp = (void*)MagickGetImageBlob(wand, &x);
-	*sz=x;
-		syslog(6,"sz=%ld %ld",x,*sz);
+	void *tmp = (void*)MagickGetImageBlob(wand, &isize);
+	*sz=isize;
 	void *tmp2=calloc(*sz,1);
 	memcpy(tmp2,tmp,*sz);
 	AN(tmp2);
@@ -240,7 +259,6 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 
 static enum vfp_hk_status __match_proto__(vfp_hk_pull_f)
 	VFP_HK_ReadFullBody(struct vfp_ctx *vc, struct vfp_entry *vfe, void *priv,void **body, ssize_t *len){
-	
 	
 	test(body,len,vc->bo,(struct vmod_smalllight_param *)priv);
 
@@ -269,9 +287,29 @@ vfp_pull_init(struct vfp_ctx *vc, struct vfp_entry *vfe)
 	vfp_hk_PREF->extendsz = 100*1024;//100KB
 	vfp_hk_PREF->buffer   = calloc(vfp_hk_PREF->bufsz,1);
 
+
 	vfp_hk_PREF->priv = vmod_smalllight_param_alloc();
+	struct vmod_smalllight_param* pr = vfp_hk_PREF->priv;
+
+	vmod_smalllight_param_read(vc->bo,pr);
 	
 	vfe->priv1 = vfp_hk_PREF;
+	
+	//Modify beresp header
+	http_Unset(vc->http, "\017Content-Length:");
+	
+	if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
+		http_Unset(vc->http, "\015Content-Type:");
+		if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
+			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_JPEG);
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_TIFF){
+			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_TIFF);
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_PNG){
+			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_PNG);
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_GIF){
+			http_SetHeader(vc->http, VMOD_PARAM_OF_CTYPE_GIF);
+		}
+	}	
 	
 	
 	return (VFP_OK);
@@ -280,6 +318,7 @@ vfp_pull_init(struct vfp_ctx *vc, struct vfp_entry *vfe)
 static void __match_proto__(vfp_fini_f)
 vfp_pull_fini(struct vfp_ctx *vc, struct vfp_entry *vfe)
 {
+
 
 	struct vfp_hk *vh = vfe->priv1;
 	vmod_smalllight_param_free(vh->priv);
@@ -301,7 +340,10 @@ struct vfp vfp_PREF = {
 	
 	
 VCL_VOID vmod_HookFetch(const struct vrt_ctx *ctx){
-	//VFP内からberespに対して書き込みは出来ないのでここの段階で値の正規化を行っておいて必要なヘッダの上書きを行っておく/content-typeとか
+	//VFPのpull/finiからberespに対して書き込みは出来ないのでここの段階で値の正規化を行っておいて必要なヘッダの上書きを行っておく/content-typeとか
+	//etagはパラメータのハッシュとか取れるようにしておいたほうがいいね
+	//とはいえオリジンのrefetchのときどうすっかね
+	//割とcontent-typeはどうしようもないのでpassの時でもfmt変換してそれを出す方向で
 	(void)VFP_Push(ctx->bo->vfc,&vfp_PREF,1);
 }
 
