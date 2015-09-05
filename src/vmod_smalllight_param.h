@@ -1,5 +1,10 @@
-static const char VMOD_PARAM_HEADER[] = "\030x-vmod-smalllight-param:";
+#define VMOD_PARAM_HEADER   "\030x-vmod-smalllight-param:"
 
+//content-type
+#define VMOD_PARAM_OF_CTYPE_TIFF  "Content-Type: image/tiff"
+#define VMOD_PARAM_OF_CTYPE_JPEG  "Content-Type: image/jpeg"
+#define VMOD_PARAM_OF_CTYPE_PNG   "Content-Type: image/png"
+#define VMOD_PARAM_OF_CTYPE_GIF   "Content-Type: image/gif"
 
 
 enum vmod_http_small_light_output_format{

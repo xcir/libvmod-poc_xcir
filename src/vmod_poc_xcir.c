@@ -78,6 +78,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	
 	char bf[32];
 	char *org_f;
+	
 	MagickWand	*wand;
 	ColorspaceType   color_space;
 	//MagickWandGenesis();
@@ -107,7 +108,6 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	//free
 	free(*body);
 	vmod_smalllight_param_calc(bo, pr);
-
 	unsigned long nim =  MagickGetNumberImages(wand);
 	if(nim > 1){
 		//agif
@@ -200,6 +200,18 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		MagickSetImageCompressionQuality(wand, pr->q);
 	}
 	
+	if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
+		if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
+			MagickSetFormat(wand, "JPEG");
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_TIFF){
+			MagickSetFormat(wand, "TIFF");
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_PNG){
+			MagickSetFormat(wand, "PNG");
+		}else if(pr->of == VMOD_HTTP_SMALL_LIGHT_OF_GIF){
+			MagickSetFormat(wand, "GIF");
+		}
+	}
+	
 	size_t x;
 	
 	void *tmp = (void*)MagickGetImageBlob(wand, &x);
@@ -268,6 +280,7 @@ vfp_pull_init(struct vfp_ctx *vc, struct vfp_entry *vfe)
 static void __match_proto__(vfp_fini_f)
 vfp_pull_fini(struct vfp_ctx *vc, struct vfp_entry *vfe)
 {
+
 	struct vfp_hk *vh = vfe->priv1;
 	vmod_smalllight_param_free(vh->priv);
 	FREE_OBJ(vh);
@@ -288,6 +301,7 @@ struct vfp vfp_PREF = {
 	
 	
 VCL_VOID vmod_HookFetch(const struct vrt_ctx *ctx){
+	//VFP内からberespに対して書き込みは出来ないのでここの段階で値の正規化を行っておいて必要なヘッダの上書きを行っておく/content-typeとか
 	(void)VFP_Push(ctx->bo->vfc,&vfp_PREF,1);
 }
 
