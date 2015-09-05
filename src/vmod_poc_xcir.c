@@ -157,7 +157,15 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	MagickWand    *canvas_wand;
 	PixelWand     *canvas_color;
 
-	if      (pr->dx->v > 0 || pr->dy->v > 0){
+	if(pr->dw->v == pr->cw && pr->dh->v == pr->ch && pr->dx->v == 0 && pr->dy->v == 0){
+		//non-work
+	}else if (pr->dw->v > pr->cw && pr->dh->v > pr->ch && pr->dx->v == 0 && pr->dy->v == 0){
+		VSLb(bo->vsl, SLT_Debug, "EXTENT:C");
+		MagickCropImage(wand,
+			pr->cw,pr->ch,
+			0,0
+		);
+	}else{
 		//EXTENT
 		VSLb(bo->vsl, SLT_Debug, "EXTENT:A");
 		canvas_wand  = NewMagickWand();
@@ -175,38 +183,6 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		MagickNewImage(canvas_wand, pr->cw, pr->ch, canvas_color);
 		VSLb(bo->vsl, SLT_Debug, "EXTENT:G");
 		VSL_Flush(bo->vsl,0);
-		DestroyPixelWand(canvas_color);
-		MagickTransformImageColorspace(canvas_wand, color_space);
-		MagickCompositeImage(canvas_wand, wand, AtopCompositeOp, pr->dx->v, pr->dy->v);
-		DestroyMagickWand(wand);
-		wand = canvas_wand;
-	}else if(pr->dw->v == pr->cw && pr->dh->v == pr->ch){
-		VSLb(bo->vsl, SLT_Debug, "EXTENT:B");
-		//nowork
-		
-	}else if(pr->dw->v > pr->cw && pr->dh->v > pr->ch){
-		//crop
-		VSLb(bo->vsl, SLT_Debug, "EXTENT:C");
-		MagickCropImage(wand,
-			pr->cw,pr->ch,
-			0,0
-		);
-	}else{
-		//extent
-		
-		VSLb(bo->vsl, SLT_Debug, "EXTENT:D");
-		canvas_wand  = NewMagickWand();
-		//これテンポラリあとでなんとかする
-		MagickSetFormat(canvas_wand, org_f);
-		//
-		canvas_color = NewPixelWand();
-		VSLb(bo->vsl, SLT_Debug, "EXTENT:E");
-		PixelSetRed(canvas_color,   pr->cc->r / 255.0);
-		PixelSetGreen(canvas_color, pr->cc->g / 255.0);
-		PixelSetBlue(canvas_color,  pr->cc->b / 255.0);
-		PixelSetAlpha(canvas_color, pr->cc->a / 255.0);
-		VSLb(bo->vsl, SLT_Debug, "EXTENT:F %f %f %f %f",pr->cw, pr->ch,pr->dx->v, pr->dy->v);
-		MagickNewImage(canvas_wand, pr->cw, pr->ch, canvas_color);
 		DestroyPixelWand(canvas_color);
 		MagickTransformImageColorspace(canvas_wand, color_space);
 		MagickCompositeImage(canvas_wand, wand, AtopCompositeOp, pr->dx->v, pr->dy->v);
