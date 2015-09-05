@@ -79,7 +79,7 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	char bf[32];
 	char *org_f;
 	size_t isize;
-	
+	unsigned long nim;
 	MagickWand	*wand;
 	ColorspaceType   color_space;
 	//MagickWandGenesis();
@@ -93,11 +93,12 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		snprintf(bf,32,"%dx%d",(int)pr->dw->v,(int)pr->dh->v);
 		MagickSetOption(wand, "jpeg:size", bf);
 	}
-	
+	//read image and calc param
 	MagickReadImageBlob(wand, *body, *sz);
 	pr->iw = (double)MagickGetImageWidth(wand);
 	pr->ih = (double)MagickGetImageHeight(wand);
 	vmod_smalllight_param_calc(bo, pr);
+	
 	if(pr->f_pt){
 		//パスするんだけどvarnishの都合上フォーマット変更だけする
 		if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
@@ -127,7 +128,9 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	color_space = MagickGetImageColorspace(wand);
 	org_f = MagickGetImageFormat(wand);
 	vmod_smalllight_param_calc(bo, pr);
-	unsigned long nim =  MagickGetNumberImages(wand);
+	
+	
+	nim =  MagickGetNumberImages(wand);
 	if(nim > 1){
 		//agif
 		//todo
@@ -186,14 +189,8 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		MagickCompositeImage(canvas_wand, wand, AtopCompositeOp, pr->dx->v, pr->dy->v);
 		DestroyMagickWand(wand);
 		wand = canvas_wand;
-		
 	}
 	
-	
-	if(pr->q != VMOD_SMALLLIGHT_PARAM_IGNORE_Q){
-		VSLb(bo->vsl, SLT_Debug, "MagickSetImageCompressionQuality %f",pr->q);
-		MagickSetImageCompressionQuality(wand, pr->q);
-	}
 	
 	if(pr->of != VMOD_HTTP_SMALL_LIGHT_OF_AUTO){
 		if      (pr->of == VMOD_HTTP_SMALL_LIGHT_OF_JPEG){
@@ -207,7 +204,13 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 		}
 	}
 	
+	//Set quality
+	if(pr->q != VMOD_SMALLLIGHT_PARAM_IGNORE_Q){
+		VSLb(bo->vsl, SLT_Debug, "MagickSetImageCompressionQuality %f",pr->q);
+		MagickSetImageCompressionQuality(wand, pr->q);
+	}
 	
+	//Write conversion image
 	void *tmp = (void*)MagickGetImageBlob(wand, &isize);
 	*sz=isize;
 	void *tmp2=calloc(*sz,1);
@@ -215,8 +218,8 @@ void test(void** body,ssize_t *sz, struct busyobj *bo, struct vmod_smalllight_pa
 	AN(tmp2);
 	free(*body);
 	*body = tmp2;
-	DestroyMagickWand(wand);
 	
+	DestroyMagickWand(wand);
 	
 }
 
